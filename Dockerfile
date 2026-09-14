@@ -1,18 +1,25 @@
-# Dockerfile — the "recipe" that builds the box (image) for this tool.
-# This file goes IN THE CODE (your repo). Docker Desktop is the PROGRAM that reads it.
+FROM python:3.12-slim AS builder
 
-# 1) Base image: a slim Linux with Python 3.12 already inside
-FROM python:3.12-slim
-
-# 2) Work inside this folder in the container
 WORKDIR /app
 
-# 3) Install dependencies first (better caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-# 4) Copy the rest of the code
-COPY app.py sample.csv ./
+FROM python:3.12-slim
 
-# 5) What runs when the container starts
-CMD ["python", "app.py", "sample.csv"]
+RUN useradd -m appuser
+
+WORKDIR /app
+
+COPY --from=builder /root/.local /home/appuser/.local
+COPY . /app
+
+RUN chown -R appuser:appuser /app
+
+USER appuser
+
+ENV PATH=/home/appuser/.local/bin:$PATH
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
