@@ -1,16 +1,21 @@
-"""Tiny data tool: reads a CSV and prints a quick summary.
-Runs the same everywhere thanks to Docker."""
-import sys
-import pandas as pd
+import polars as pl
+import duckdb
 
-def main(path: str) -> None:
-    df = pd.read_csv(path)
-    print(f"File: {path}")
-    print(f"Rows: {len(df):,}  |  Columns: {len(df.columns)}")
-    print("Columns:", ", ".join(df.columns))
-    print("\nNumeric summary:")
-    print(df.describe(include="number"))
+def main():
+    print("Initializing application with Polars, uv, and DuckDB...")
+    
+    # Example processing with Polars
+    try:
+        df = pl.read_csv("sample.csv")
+        print("Data loaded successfully with Polars:")
+        print(df)
+        
+        # Example query with DuckDB
+        result = duckdb.sql("SELECT * FROM df WHERE 1=1").pl()
+        print("DuckDB query result:")
+        print(result)
+    except Exception as e:
+        print(f"Running without sample.csv: {e}")
 
 if __name__ == "__main__":
-    csv_path = sys.argv[1] if len(sys.argv) > 1 else "sample.csv"
-    main(csv_path)
+    main()
