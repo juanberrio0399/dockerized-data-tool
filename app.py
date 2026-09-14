@@ -1,16 +1,26 @@
-"""Tiny data tool: reads a CSV and prints a quick summary.
-Runs the same everywhere thanks to Docker."""
-import sys
 import pandas as pd
+import pandera as pa
+from pandera import Column, DataFrameSchema, Check
 
-def main(path: str) -> None:
-    df = pd.read_csv(path)
-    print(f"File: {path}")
-    print(f"Rows: {len(df):,}  |  Columns: {len(df.columns)}")
-    print("Columns:", ", ".join(df.columns))
-    print("\nNumeric summary:")
-    print(df.describe(include="number"))
+# Definir esquema de validación para el CSV
+schema = DataFrameSchema({
+    # Ajustar según las columnas reales de sample.csv
+    # Ejemplo genérico esperando columnas numéricas o de texto estándar
+})
+
+def load_and_validate_data(filepath):
+    try:
+        df = pd.read_csv(filepath)
+        # Validar el DataFrame contra el esquema
+        validated_df = schema.validate(df, lazy=True)
+        return validated_df
+    except pa.errors.SchemaErrors as err:
+        print("Error de validación en el esquema de datos:")
+        print(err.failure_cases)
+        raise SystemExit(1)
+    except Exception as e:
+        print(f"Error al cargar el archivo: {e}")
+        raise SystemExit(1)
 
 if __name__ == "__main__":
-    csv_path = sys.argv[1] if len(sys.argv) > 1 else "sample.csv"
-    main(csv_path)
+    load_and_validate_data("sample.csv")
