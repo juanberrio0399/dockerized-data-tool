@@ -2,9 +2,22 @@
 Runs the same everywhere thanks to Docker."""
 import sys
 import pandas as pd
+import pandera as pa
+from pandera import Column, DataFrameSchema, Check
+
+schema = DataFrameSchema({
+    "value": Column(float, Check.ge(0), nullable=False),
+}, coerce=True)
+
+def load_data(filepath):
+    try:
+        df = pd.read_csv(filepath)
+        return schema.validate(df)
+    except pa.errors.SchemaErrors as e:
+        raise ValueError(f"Error de validación en el esquema del CSV: {e}")
 
 def main(path: str) -> None:
-    df = pd.read_csv(path)
+    df = load_data(path)
     print(f"File: {path}")
     print(f"Rows: {len(df):,}  |  Columns: {len(df.columns)}")
     print("Columns:", ", ".join(df.columns))
