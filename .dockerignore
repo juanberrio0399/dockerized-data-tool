@@ -1,0 +1,11 @@
+# Keep the build context small and free of history, tests and local files.
+.git
+.github
+tests
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+venv
+*.md
+!README.md
