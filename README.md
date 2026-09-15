@@ -14,7 +14,26 @@ no "works on my machine" problems.
 | `sample.csv` | Sample data | **In the code** |
 | Docker Desktop | The program that builds & runs the container | **Installed on your PC** |
 
-## Run it with Docker
+## Pull the published image (no clone, no build)
+
+Every release is published to GitHub Container Registry by `.github/workflows/publish.yml`,
+only after the image passes the Trivy scan. Images carry OCI labels, SLSA provenance and an SBOM.
+
+```bash
+docker pull ghcr.io/juanberrio0399/dockerized-data-tool:latest
+docker run --rm ghcr.io/juanberrio0399/dockerized-data-tool:latest                 # built-in sample.csv
+docker run --rm -v "$PWD:/data" ghcr.io/juanberrio0399/dockerized-data-tool:latest \
+  python app.py /data/your.csv                                                      # your own file
+```
+
+| Tag | What it is |
+|---|---|
+| `latest`, `1`, `1.2`, `1.2.3` | Stable releases, from Git tags `vX.Y.Z` |
+| `edge` | Latest commit on `main` (may change at any time) |
+
+Pin a full version (`:1.2.3`) or a digest in scripts and pipelines. The container runs as the unprivileged UID `10001`, so a mounted folder must be readable by that user.
+
+## Build it yourself with Docker
 
 ```bash
 docker build -t data-tool .        # build the image from the Dockerfile
