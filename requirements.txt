@@ -1,1 +1,3 @@
 pandas
+pandera>=0.33
+pyyaml>=6

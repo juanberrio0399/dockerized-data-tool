@@ -37,10 +37,27 @@ Bad input never ends in a Python traceback: the tool prints one `Error: ...` lin
 | Summary printed (including a header-only file or one without numeric columns) | `0` |
 | The file is empty or is not a readable CSV (malformed, binary) | `1` |
 | The path does not exist, is a directory, or cannot be read | `2` |
+| The CSV does not match the schema passed with `--schema` | `3` |
 
 ```bash
 pip install -r requirements.txt pytest
 pytest -q                          # run the tests
+```
+
+## Schema contracts
+
+Catch a silent change in the input (a renamed column, text in a numeric column, empty required values) before the summary runs:
+
+```bash
+python app.py sample.csv --infer-schema schema.yaml   # 1) write the contract from a known-good file
+python app.py new_export.csv --schema schema.yaml     # 2) validate every new file against it
+```
+
+The inferred contract only fixes the **columns, their types and whether empty values are allowed** — not the value ranges of the reference file, so any valid new data passes. Add business rules by editing `schema.yaml` (for example `checks: {greater_than_or_equal_to: 0}` under a column). A file that breaks the contract exits with `3` and one line per problem:
+
+```text
+Error: missing column 'revenue'
+Error: column 'units': expected int64 values, found 'twelve' (line 3)
 ```
 
 ## Why Docker matters
