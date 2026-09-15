@@ -1,9 +1,8 @@
 """Tests for the CLI: clear errors and exit codes instead of tracebacks."""
+
 import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -73,7 +72,9 @@ def test_text_only_columns_report_no_numeric_summary(tmp_path, capsys):
 
 
 def test_cli_process_has_no_traceback(tmp_path):
-    result = subprocess.run([sys.executable, str(ROOT / "app.py"), str(tmp_path / "missing.csv")], capture_output=True, text=True)
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "app.py"), str(tmp_path / "missing.csv")], capture_output=True, text=True
+    )
     assert result.returncode == app.EXIT_BAD_PATH
     assert "Traceback" not in result.stderr
     assert result.stderr.strip().startswith("Error:")

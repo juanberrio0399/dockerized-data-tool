@@ -11,6 +11,20 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Ruff (version pinned in requirements-dev.txt)
+        run: pip install "$(grep -E '^ruff==' requirements-dev.txt)"
+      - name: Lint (ruff check)
+        run: ruff check --output-format=github .
+      - name: Check formatting (ruff format)
+        run: ruff format --check --diff .
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -19,7 +33,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest
+        run: pip install -r requirements-dev.txt
       - name: Run tests
         run: pytest -q
       - name: Build Docker image and run it
