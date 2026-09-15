@@ -9,6 +9,7 @@ no "works on my machine" problems.
 |---|---|---|
 | `app.py` | The Python tool (reads a CSV, prints a summary) | **In the code** |
 | `requirements.txt` | Python dependencies (pandas) | **In the code** |
+| `requirements-dev.txt`, `pyproject.toml` | Test and lint tools (pytest, Ruff) and the Ruff settings | **In the code** |
 | `Dockerfile` | The recipe to build the container image | **In the code** |
 | `sample.csv` | Sample data | **In the code** |
 | Docker Desktop | The program that builds & runs the container | **Installed on your PC** |
@@ -40,8 +41,9 @@ Bad input never ends in a Python traceback: the tool prints one `Error: ...` lin
 | The CSV does not match the schema passed with `--schema` | `3` |
 
 ```bash
-pip install -r requirements.txt pytest
-pytest -q                          # run the tests
+pip install -r requirements-dev.txt   # runtime dependencies + pytest + pinned Ruff
+pytest -q                             # run the tests
+ruff check . && ruff format --check . # lint and formatting, same as CI
 ```
 
 ## Schema contracts
