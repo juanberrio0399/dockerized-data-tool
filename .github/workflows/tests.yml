@@ -24,3 +24,16 @@ jobs:
         run: |
           docker build -t data-tool .
           docker run --rm data-tool
+      - name: Check the container runs without root
+        run: |
+          uid=$(docker run --rm data-tool id -u)
+          echo "container uid: $uid"
+          test "$uid" != "0"
+      - name: Check error handling inside the container
+        run: |
+          set +e
+          docker run --rm data-tool python app.py /data/missing.csv
+          code=$?
+          set -e
+          echo "exit code: $code"
+          test "$code" -eq 2
