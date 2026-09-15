@@ -28,6 +28,21 @@ pip install -r requirements.txt
 python app.py sample.csv
 ```
 
+## Errors and exit codes
+
+Bad input never ends in a Python traceback: the tool prints one `Error: ...` line to stderr and exits with a code scripts can check.
+
+| Situation | Exit code |
+|---|---|
+| Summary printed (including a header-only file or one without numeric columns) | `0` |
+| The file is empty or is not a readable CSV (malformed, binary) | `1` |
+| The path does not exist, is a directory, or cannot be read | `2` |
+
+```bash
+pip install -r requirements.txt pytest
+pytest -q                          # run the tests
+```
+
 ## Why Docker matters
 
 The `Dockerfile` bundles Python + the exact dependencies into one portable image.
