@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "0 12 * * 1" # weekly: new CVEs appear even when the code does not change
 
 permissions:
   contents: read
@@ -24,6 +26,17 @@ jobs:
         run: |
           docker build -t data-tool .
           docker run --rm data-tool
+      - name: Scan the image for vulnerabilities (Trivy)
+        # Pinned to the v0.36.0 commit. Fails only on CRITICAL/HIGH findings that already have a fix,
+        # so the check stays actionable instead of red forever on unpatched base-image CVEs.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: data-tool
+          format: table
+          severity: CRITICAL,HIGH
+          vuln-type: os,library
+          ignore-unfixed: true
+          exit-code: "1"
       - name: Check the container runs without root
         run: |
           uid=$(docker run --rm data-tool id -u)
