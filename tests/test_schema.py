@@ -1,4 +1,5 @@
 """Tests for schema contracts: --infer-schema writes a structural contract, --schema enforces it."""
+
 import sys
 from pathlib import Path
 

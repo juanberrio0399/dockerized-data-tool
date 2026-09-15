@@ -5,6 +5,7 @@ Optional schema contract (pandera):
   python app.py reference.csv --infer-schema schema.yaml   # write the contract from a reference file
   python app.py new.csv --schema schema.yaml               # stop before the summary if the file breaks it
 """
+
 import argparse
 import sys
 from pathlib import Path
@@ -64,6 +65,7 @@ def summarize(path: str, df: pd.DataFrame) -> int:
 
 # ---------- Schema contracts (pandera is only imported when an option needs it) ----------
 
+
 def write_schema(df: pd.DataFrame, target: str) -> int:
     """Structural contract only: columns, types and whether empty values are allowed.
 
@@ -120,7 +122,10 @@ def describe_failures(failure_cases: pd.DataFrame) -> list[str]:
         elif is_type_check(check):
             if pd.isna(value):
                 continue  # empty cells are reported by not_nullable
-            key, example = f"expected {check[check.index('(') + 1:-1].strip(chr(39))} values, found", f"'{value}'{where}"
+            key, example = (
+                f"expected {check[check.index('(') + 1 : -1].strip(chr(39))} values, found",
+                f"'{value}'{where}",
+            )
         else:
             if column in type_failed or str(value).startswith(("TypeError", "ValueError")):
                 continue  # knock-on effect of a wrong type already reported
@@ -153,7 +158,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("csv", nargs="?", default="sample.csv", help="CSV file (default: sample.csv)")
     contract = parser.add_mutually_exclusive_group()
     contract.add_argument("--schema", metavar="FILE", help="validate the CSV against a YAML schema before the summary")
-    contract.add_argument("--infer-schema", metavar="FILE", help="write a YAML schema (columns, types, empty values) from this CSV")
+    contract.add_argument(
+        "--infer-schema", metavar="FILE", help="write a YAML schema (columns, types, empty values) from this CSV"
+    )
     return parser.parse_args(argv)
 
 
