@@ -1,3 +1,4 @@
 pandas
 pandera>=0.33
 pyyaml>=6
+requests>=2.32  # only used by --insights; 2.32 is the first release without CVE-2024-35195
