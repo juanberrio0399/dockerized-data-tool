@@ -19,6 +19,11 @@ no "works on my machine" problems.
 Every release is published to GitHub Container Registry by `.github/workflows/publish.yml`,
 only after the image passes the Trivy scan. Images carry OCI labels, SLSA provenance and an SBOM.
 
+Each tag is a multi-platform manifest list built for **`linux/amd64` and `linux/arm64`**, so Docker
+pulls the native image on an Intel/AMD server, on Apple Silicon (M1–M4) and on ARM cloud instances
+such as AWS Graviton — no Rosetta, no QEMU emulation. Both platforms are built on native runners,
+scanned and smoke tested before they are published.
+
 ```bash
 docker pull ghcr.io/juanberrio0399/dockerized-data-tool:latest
 docker run --rm ghcr.io/juanberrio0399/dockerized-data-tool:latest                 # built-in sample.csv
@@ -30,8 +35,16 @@ docker run --rm -v "$PWD:/data" ghcr.io/juanberrio0399/dockerized-data-tool:late
 |---|---|
 | `latest`, `1`, `1.2`, `1.2.3` | Stable releases, from Git tags `vX.Y.Z` |
 | `edge` | Latest commit on `main` (may change at any time) |
+| `build-linux-amd64`, `build-linux-arm64` | Internal staging tags used by the release workflow — not for use |
 
 Pin a full version (`:1.2.3`) or a digest in scripts and pipelines. The container runs as the unprivileged UID `10001`, so a mounted folder must be readable by that user.
+
+```bash
+docker buildx imagetools inspect ghcr.io/juanberrio0399/dockerized-data-tool:latest  # see both platforms
+docker pull --platform linux/arm64 ghcr.io/juanberrio0399/dockerized-data-tool:latest  # force one
+gh attestation verify --owner juanberrio0399 \
+  oci://ghcr.io/juanberrio0399/dockerized-data-tool:latest                            # check provenance
+```
 
 ## Build it yourself with Docker
 

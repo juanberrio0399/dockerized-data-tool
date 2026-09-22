@@ -1,15 +1,29 @@
 name: Publish image
 
-# Builds the image on every PR (never pushed) and publishes it to GitHub Container Registry:
+# Builds the image for linux/amd64 and linux/arm64 on every PR (never pushed) and publishes a
+# multi-platform manifest list to GitHub Container Registry:
 #   - push to main      -> ghcr.io/juanberrio0399/dockerized-data-tool:edge
 #   - tag vX.Y.Z        -> :X.Y.Z, :X.Y, :X (X >= 1) and :latest
 # Only GITHUB_TOKEN is used: no registry account or stored secret.
 #
-# Publishing is gated: the image is built once, loaded, scanned with Trivy and smoke tested, and that
-# exact image is then pushed (docker tag + docker push). Nothing is rebuilt for the push, so what is
-# published is byte for byte what was scanned; the job re-reads the pushed manifest and fails if its
-# config digest differs. SLSA provenance and an SPDX SBOM are attested for the pushed digest.
-# No cross-run build cache on purpose: every build re-runs `apt-get upgrade` for fresh security fixes.
+# Publishing stays gated, per platform. Each platform is built on a NATIVE runner (GitHub's free
+# ubuntu-24.04-arm for arm64, so no QEMU emulation), loaded into the local daemon, scanned with
+# Trivy and smoke tested there; that exact image is then pushed (docker tag + docker push) and the
+# job fails unless the config digest of the pushed manifest equals the image that was scanned.
+# The publish job welds those two *scanned digests* into a manifest list with
+# `docker buildx imagetools create` and fails unless the published index contains exactly those
+# digests, one per expected platform, under every tag. Nothing is rebuilt for the push, so what
+# users pull is byte for byte what was scanned and smoke tested.
+#
+# `build-linux-amd64` / `build-linux-arm64` are internal staging tags: they exist only because
+# `docker push` cannot push an untagged manifest. They are moved on every publish, never released.
+#
+# SLSA provenance and an SPDX SBOM are attested for each platform digest, and provenance for the
+# index digest, so `gh attestation verify oci://<image>:<tag>` resolves and passes.
+#
+# No cross-run build cache on purpose: every build re-runs `apt-get upgrade` for fresh security
+# fixes. Both platforms build natively in a couple of minutes, so a cache would buy little and
+# would risk serving a stale `apt-get upgrade` layer.
 
 on:
   push:
@@ -37,7 +51,18 @@ env:
 
 jobs:
   image:
-    runs-on: ubuntu-latest
+    name: Build and scan (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -51,20 +76,16 @@ jobs:
 
       - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
 
-      - name: Compute tags and OCI labels
+      - name: Compute the staging tag and OCI labels
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: ${{ env.IMAGE }}
-          # latest=auto adds :latest only for stable semver tags (not for pre-releases or edge).
-          flavor: latest=auto
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
-            type=edge,branch=main
-            type=ref,event=pr
-            type=raw,value=${{ inputs.test_tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.test_tag != '' }}
+          flavor: latest=false
+          # One internal tag per platform: `docker push` has no way to push an untagged manifest,
+          # and `docker buildx imagetools create` needs the images to already be in the registry.
+          # The release tags are computed in the publish job and only ever point at the index.
+          tags: type=raw,value=build-linux-${{ matrix.arch }}
           # source, revision, version, created and licenses (MIT, from the repo) are generated automatically.
           labels: |
             org.opencontainers.image.title=dockerized-data-tool
@@ -75,6 +96,7 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
+          platforms: ${{ matrix.platform }}
           load: true
           push: false
           provenance: false
@@ -97,9 +119,10 @@ jobs:
         with:
           image-ref: ${{ steps.build.outputs.imageid }}
           format: spdx-json
-          output: sbom.spdx.json
+          output: sbom.${{ matrix.arch }}.spdx.json
 
       - name: Smoke test (runs, non-root)
+        # Native on both runners, so arm64 is exercised on real hardware and not under emulation.
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
         run: |
@@ -118,20 +141,17 @@ jobs:
         id: publish
         if: env.PUBLISH == 'true'
         env:
-          TAGS: ${{ steps.meta.outputs.tags }}
+          TAG: ${{ steps.meta.outputs.tags }}
         run: |
           set -euo pipefail
-          first=""
-          while IFS= read -r tag; do
-            [ -n "$tag" ] || continue
-            docker push "$tag"
-            [ -n "$first" ] || first="$tag"
-          done <<< "$TAGS"
-          digest=$(docker inspect --format '{{index .RepoDigests 0}}' "$first" | cut -d'@' -f2)
+          docker push "$TAG"
+          digest=$(docker inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$TAG" \
+            | grep "^$IMAGE@" | head -n1 | cut -d'@' -f2)
+          test -n "$digest"
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
-          echo "pushed $first@$digest"
+          echo "pushed $TAG@$digest"
 
-      - name: Verify the published image is the scanned image
+      - name: Verify the pushed image is the scanned image
         if: env.PUBLISH == 'true'
         env:
           SCANNED: ${{ steps.build.outputs.imageid }}
@@ -145,7 +165,7 @@ jobs:
           echo "published: $published"
           test -n "$SCANNED" && test "$SCANNED" = "$published"
 
-      - name: Attest the build provenance (SLSA)
+      - name: Attest the build provenance (SLSA) of this platform
         if: env.PUBLISH == 'true'
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
@@ -153,13 +173,156 @@ jobs:
           subject-digest: ${{ steps.publish.outputs.digest }}
           push-to-registry: true
 
-      - name: Attest the SBOM
+      - name: Attest the SBOM of this platform
         if: env.PUBLISH == 'true'
         uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e # v4.1.0
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.publish.outputs.digest }}
-          sbom-path: sbom.spdx.json
+          sbom-path: sbom.${{ matrix.arch }}.spdx.json
+          push-to-registry: true
+
+      - name: Hand the scanned digest to the publish job
+        if: env.PUBLISH == 'true'
+        env:
+          ARCH: ${{ matrix.arch }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          set -euo pipefail
+          mkdir -p digests
+          printf '%s' "$DIGEST" > "digests/$ARCH"
+
+      - name: Upload the scanned digest
+        if: env.PUBLISH == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digest-${{ matrix.arch }}
+          path: digests/${{ matrix.arch }}
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Summary
+        if: always()
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          DIGEST: ${{ steps.publish.outputs.digest }}
+        run: |
+          {
+            echo "### $PLATFORM"
+            if [ "$PUBLISH" = "true" ]; then
+              echo "Scanned and pushed: \`$DIGEST\`"
+            else
+              echo "Built and scanned, not pushed."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    name: Publish the multi-platform manifest list
+    needs: image
+    # Same condition as env.PUBLISH, inlined: workflow env is not available in a job-level `if`.
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.test_tag != '')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write      # signing the provenance attestation
+      attestations: write
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@594f3bf4285d9ea8dc53c9a0c9c4092420091003 # v4.4.0
+
+      - name: Download the digests that were scanned
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: digests
+          pattern: digest-*
+          merge-multiple: true
+
+      - name: Compute tags and OCI annotations
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        env:
+          # The tags point at the manifest list, so the OCI metadata belongs on the index.
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: index
+        with:
+          images: ${{ env.IMAGE }}
+          # latest=auto adds :latest only for stable semver tags (not for pre-releases or edge).
+          flavor: latest=auto
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}},enable=${{ !startsWith(github.ref, 'refs/tags/v0.') }}
+            type=edge,branch=main
+            type=raw,value=${{ inputs.test_tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.test_tag != '' }}
+          labels: |
+            org.opencontainers.image.title=dockerized-data-tool
+            org.opencontainers.image.description=CSV summary tool with schema validation, packaged as a non-root container
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create the manifest list from the scanned digests
+        id: publish
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          ANNOTATIONS: ${{ steps.meta.outputs.annotations }}
+        run: |
+          set -euo pipefail
+          amd64=$(cat digests/amd64)
+          arm64=$(cat digests/arm64)
+          args=()
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            args+=(--tag "$tag")
+          done <<< "$TAGS"
+          while IFS= read -r annotation; do
+            [ -n "$annotation" ] || continue
+            args+=(--annotation "$annotation")
+          done <<< "$ANNOTATIONS"
+          docker buildx imagetools create "${args[@]}" "$IMAGE@$amd64" "$IMAGE@$arm64"
+          first=$(head -n1 <<< "$TAGS")
+          index=$(docker buildx imagetools inspect "$first" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "digest=$index" >> "$GITHUB_OUTPUT"
+          echo "published $first@$index"
+
+      - name: Verify the list holds exactly the images that were scanned
+        env:
+          INDEX: ${{ steps.publish.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          raw=$(docker buildx imagetools inspect "$IMAGE@$INDEX" --raw)
+          expected=$(printf '%s\n%s\n' "$(cat digests/amd64)" "$(cat digests/arm64)" | sort)
+          got=$(jq -r '.manifests[].digest' <<< "$raw" | sort)
+          platforms=$(jq -r '.manifests[] | .platform.os + "/" + .platform.architecture' <<< "$raw" | sort)
+          echo "index:     $INDEX"
+          echo "scanned:"; echo "$expected"
+          echo "published:"; echo "$got"
+          echo "platforms:"; echo "$platforms"
+          # No extra entry may sneak into the list, and every entry must be one we scanned.
+          test "$(jq '.manifests | length' <<< "$raw")" -eq 2
+          test "$got" = "$expected"
+          test "$platforms" = "$(printf 'linux/amd64\nlinux/arm64')"
+          # Every published tag must resolve to this very index.
+          while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
+            resolved=$(docker buildx imagetools inspect "$tag" --format '{{json .Manifest}}' | jq -r .digest)
+            echo "$tag -> $resolved"
+            test "$resolved" = "$INDEX"
+          done <<< "$TAGS"
+
+      - name: Attest the build provenance (SLSA) of the manifest list
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.publish.outputs.digest }}
           push-to-registry: true
 
       - name: Summary
@@ -169,8 +332,8 @@ jobs:
           DIGEST: ${{ steps.publish.outputs.digest }}
         run: |
           {
-            echo "## Image"
-            if [ "$PUBLISH" = "true" ]; then echo "Pushed: \`$DIGEST\`"; else echo "Built and scanned, not pushed."; fi
+            echo "## Image (linux/amd64 + linux/arm64)"
+            echo "Published index: \`$DIGEST\`"
             echo '```'
             echo "$TAGS"
             echo '```'
