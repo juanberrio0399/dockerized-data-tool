@@ -1,4 +1,4 @@
 # Development and CI tools on top of the runtime dependencies (not installed in the Docker image).
 -r requirements.txt
 pytest
-ruff==0.16.7
+ruff==0.16.8
