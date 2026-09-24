@@ -1,5 +1,5 @@
-"""Tiny data tool: reads a CSV and prints a quick summary.
-Runs the same everywhere thanks to Docker.
+"""Reads a CSV and prints a summary. Bad input exits with a code, never a traceback:
+0 ok, 1 unreadable CSV, 2 bad path, 3 schema mismatch, 4 --insights failed (see the EXIT_* constants).
 
 Optional schema contract (pandera):
   python app.py reference.csv --infer-schema schema.yaml   # write the contract from a reference file

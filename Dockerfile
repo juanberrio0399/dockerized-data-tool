@@ -1,16 +1,12 @@
-# Dockerfile — the "recipe" that builds the box (image) for this tool.
-# This file goes IN THE CODE (your repo). Docker Desktop is the PROGRAM that reads it.
+# Two stages so the runtime image never inherits pip, its cache or any build leftover:
+# only the finished virtual environment crosses over.
 
-# ---- Stage 1: install the dependencies into an isolated virtual environment ----
 FROM python:3.12-slim AS build
 ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN python -m venv /opt/venv
 COPY requirements.txt .
 RUN /opt/venv/bin/pip install -r requirements.txt
 
-# ---- Stage 2: the image that actually runs ----
-# Only the ready-made virtual environment and the app are copied: no pip cache,
-# no build leftovers, and the process does NOT run as root.
 FROM python:3.12-slim
 ENV PATH="/opt/venv/bin:$PATH" PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
@@ -30,5 +26,5 @@ COPY app.py sample.csv ./
 
 USER 10001
 
-# What runs when the container starts
+# Default to the bundled sample so `docker run <image>` with no arguments demonstrates the tool.
 CMD ["python", "app.py", "sample.csv"]
