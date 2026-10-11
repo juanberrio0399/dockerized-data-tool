@@ -1,5 +1,7 @@
 # Dockerized Data Tool
 
+> Current status, what was done and what is left: **[PLAN.md](PLAN.md)**.
+
 A CSV summary CLI with optional schema contracts, shipped as a hardened, multi-platform container image.
 
 [![Tests](https://github.com/juanberrio0399/dockerized-data-tool/actions/workflows/tests.yml/badge.svg)](https://github.com/juanberrio0399/dockerized-data-tool/actions/workflows/tests.yml)
