@@ -62,6 +62,8 @@ Both platforms build on native runners (GitHub's free `ubuntu-24.04-arm` for arm
 
 How the schema contracts work, exactly what `--insights` sends to Google, the image tags, the design decisions and the runbook: **[docs/reference.md](docs/reference.md)**.
 
+User stories, flows and data: [docs/PRODUCT.md](docs/PRODUCT.md).
+
 ## What it connects to
 
 | Repo or system | How |
@@ -125,7 +127,7 @@ The only environment variable is `GEMINI_API_KEY`, and only `--insights` needs i
 | `.dockerignore` | Keeps history, tests and local files out of the build context |
 | `tests/` | `test_app.py` (exit codes, stderr, arguments), `test_schema.py` (contracts and error messages), `test_insights.py` (Gemini path, HTTP mocked) |
 | `.github/workflows/` | `tests.yml` (Ruff, pytest, image build, Trivy, non-root checks), `publish.yml` (the release pipeline above), `codeql.yml` (SAST) |
-| `docs/` | Reference (contracts, insights, tags, decisions, operation) and the banners |
+| `docs/` | Reference (contracts, insights, tags, decisions, operation), product doc (user stories, flows, data) and the banners |
 
 ## Status
 

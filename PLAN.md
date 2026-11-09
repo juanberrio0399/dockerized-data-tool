@@ -1,6 +1,6 @@
 # Plan — Dockerized Data Tool
 
-Updated: 2026-10-11 · Status: **maintained** (image published to GHCR)
+Updated: 2026-11-09 · Status: **maintained** (image published to GHCR)
 
 How it works is in the [README](README.md). This file says where the project stands and what comes next.
 
@@ -49,6 +49,8 @@ A CSV summary CLI with optional schema contracts, shipped as a hardened multi-pl
 3. #46: publish as a GitHub Action on the Marketplace.
 4. #56: chunked validation so a file larger than memory doesn't fail.
 5. #37: discoverability and social preview.
+
+User stories, flows and data: [docs/PRODUCT.md](docs/PRODUCT.md).
 
 ## Known traps
 

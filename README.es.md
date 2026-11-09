@@ -62,6 +62,8 @@ Las dos plataformas compilan en runners nativos (el `ubuntu-24.04-arm` gratis de
 
 Cómo funcionan los contratos, qué manda exactamente `--insights` a Google, los tags de la imagen, las decisiones de diseño y la guía de operación: **[docs/reference.es.md](docs/reference.es.md)**.
 
+Historias de usuario, flujos y datos: [docs/PRODUCTO.md](docs/PRODUCTO.md).
+
 ## Con qué se conecta
 
 | Repo o sistema | Cómo |
@@ -125,7 +127,7 @@ La única variable de entorno es `GEMINI_API_KEY`, y solo la necesita `--insight
 | `.dockerignore` | Deja el historial, las pruebas y los archivos locales fuera del contexto de build |
 | `tests/` | `test_app.py` (códigos de salida, stderr, argumentos), `test_schema.py` (contratos y mensajes de error), `test_insights.py` (Gemini con HTTP simulado) |
 | `.github/workflows/` | `tests.yml` (Ruff, pytest, build de la imagen, Trivy, revisiones de no-root), `publish.yml` (la publicación del diagrama), `codeql.yml` (SAST) |
-| `docs/` | Referencia (contratos, insights, tags, decisiones, operación) y los banners |
+| `docs/` | Referencia (contratos, insights, tags, decisiones, operación), documento de producto (historias, flujos, datos) y los banners |
 
 ## Estado
 
