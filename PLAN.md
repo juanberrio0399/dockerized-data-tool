@@ -40,15 +40,15 @@ A CSV summary CLI with optional schema contracts, shipped as a hardened multi-pl
 | 2026-09-22 | amd64 + arm64 from natively scanned digests | #38 |
 | 2026-09-23 | CodeQL, Dependabot, README rewritten around the supply chain | #39–#44 |
 | 2026-10-01 | Python 3.14; pip/setuptools stripped from the venv **and** the system Python (4 HIGH findings gone) | #51, #52 |
+| 2026-11-09 | README in English and Spanish with banner; details moved to `docs/reference(.es).md`; Python badge fixed to 3.14 | — |
 
 ## What's left
 
-1. README badge still says **Python 3.12**; the image is 3.14.
-2. #47: OpenSSF Scorecard (SLSA provenance is already there).
+1. #47: OpenSSF Scorecard (SLSA provenance is already there).
+2. #55: keyless image signing with Cosign.
 3. #46: publish as a GitHub Action on the Marketplace.
-4. #37: discoverability and social preview.
-5. #1: Polars / uv / DuckDB, worth it only if the CLI grows beyond a summary.
-6. Dependabot #53 (ruff, patch) is open.
+4. #56: chunked validation so a file larger than memory doesn't fail.
+5. #37: discoverability and social preview.
 
 ## Known traps
 
