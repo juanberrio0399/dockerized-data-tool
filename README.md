@@ -135,6 +135,10 @@ Maintained. The image is on GHCR, the latest release is `v1.0.0`, and every push
 
 Gaps I know about: there's no example `schema.yaml` in the repo, `GEMINI_MODEL` is a constant in `app.py` that will fail with exit `4` when Google retires the model, and there's no CHANGELOG. Next, from the open issues: [#47 OpenSSF Scorecard](https://github.com/juanberrio0399/dockerized-data-tool/issues/47), [#55 keyless signing with Cosign](https://github.com/juanberrio0399/dockerized-data-tool/issues/55) and [#56 chunked validation for files larger than memory](https://github.com/juanberrio0399/dockerized-data-tool/issues/56). More in [PLAN.md](PLAN.md).
 
+## Maintenance
+
+Dependencies are kept current by Dependabot, which I set up in [`.github/dependabot.yml`](.github/dependabot.yml). Every PR it opens is assigned to me with the `mantenimiento-automatico` label, it only gets merged if the tests pass, and I review major version bumps by hand.
+
 ## License
 
 [MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)

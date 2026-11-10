@@ -135,6 +135,10 @@ Mantenido. La imagen está en GHCR, la última versión es `v1.0.0` y cada push 
 
 Huecos que conozco: no hay un `schema.yaml` de ejemplo en el repo, `GEMINI_MODEL` es una constante en `app.py` que va a fallar con código `4` cuando Google retire el modelo, y no hay CHANGELOG. Lo siguiente, de los issues abiertos: [#47 OpenSSF Scorecard](https://github.com/juanberrio0399/dockerized-data-tool/issues/47), [#55 firma sin llaves con Cosign](https://github.com/juanberrio0399/dockerized-data-tool/issues/55) y [#56 validación por lotes para archivos más grandes que la memoria](https://github.com/juanberrio0399/dockerized-data-tool/issues/56). Más en [PLAN.md](PLAN.md) (en inglés).
 
+## Mantenimiento
+
+Las dependencias las mantiene al día Dependabot, que configuré yo en [`.github/dependabot.yml`](.github/dependabot.yml). Cada PR que abre me lo asigna a mí con la etiqueta `mantenimiento-automatico`, solo entra si pasan las pruebas y los cambios de versión mayor los reviso a mano.
+
 ## Licencia
 
 [MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)

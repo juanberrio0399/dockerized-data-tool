@@ -15,7 +15,10 @@ updates:
     commit-message:
       prefix: ci
     labels:
+      - "mantenimiento-automatico"
       - dependencies
+    assignees:
+      - "juanberrio0399"
   - package-ecosystem: pip
     directory: /
     schedule:
@@ -28,7 +31,10 @@ updates:
     commit-message:
       prefix: deps
     labels:
+      - "mantenimiento-automatico"
       - dependencies
+    assignees:
+      - "juanberrio0399"
   - package-ecosystem: docker
     directory: /
     schedule:
@@ -41,4 +47,7 @@ updates:
     commit-message:
       prefix: build
     labels:
+      - "mantenimiento-automatico"
       - dependencies
+    assignees:
+      - "juanberrio0399"
