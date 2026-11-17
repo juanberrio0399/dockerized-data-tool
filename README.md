@@ -143,4 +143,4 @@ Dependencies are kept current by Dependabot, which I set up in [`.github/dependa
 
 ## License
 
-[MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)
+<img src="docs/wolf.webp" width="28" height="28" alt="" align="absmiddle"> [MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)
