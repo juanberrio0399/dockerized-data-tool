@@ -16,6 +16,8 @@ Y se distribuye como contenedor, no con `pip install`. La imagen corre con un UI
 
 ## Cómo funciona
 
+<p align="center"><img src="docs/flow.es.svg" alt="Vista animada del flujo" width="100%"></p>
+
 ```mermaid
 flowchart TD
     subgraph cli["Al correr la herramienta"]

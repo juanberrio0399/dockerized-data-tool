@@ -16,6 +16,8 @@ And it ships as a container, not a `pip install`. The image runs as an unprivile
 
 ## How it works
 
+<p align="center"><img src="docs/flow.svg" alt="Animated overview of the flow" width="100%"></p>
+
 ```mermaid
 flowchart TD
     subgraph cli["Running the tool"]
