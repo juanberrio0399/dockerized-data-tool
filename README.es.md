@@ -16,6 +16,8 @@ Y se distribuye como contenedor, no con `pip install`. La imagen corre con un UI
 
 ## Cómo funciona
 
+<p align="center"><img src="docs/flow.es.svg" alt="Vista animada del flujo" width="100%"></p>
+
 ```mermaid
 flowchart TD
     subgraph cli["Al correr la herramienta"]
@@ -141,4 +143,4 @@ Las dependencias las mantiene al día Dependabot, que configuré yo en [`.github
 
 ## Licencia
 
-[MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)
+<img src="docs/wolf.webp" width="28" height="28" alt="" align="absmiddle"> [MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)

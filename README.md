@@ -16,6 +16,8 @@ And it ships as a container, not a `pip install`. The image runs as an unprivile
 
 ## How it works
 
+<p align="center"><img src="docs/flow.svg" alt="Animated overview of the flow" width="100%"></p>
+
 ```mermaid
 flowchart TD
     subgraph cli["Running the tool"]
@@ -141,4 +143,4 @@ Dependencies are kept current by Dependabot, which I set up in [`.github/dependa
 
 ## License
 
-[MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)
+<img src="docs/wolf.webp" width="28" height="28" alt="" align="absmiddle"> [MIT](LICENSE) · Juan Berrio · [juanberrio0399.github.io](https://juanberrio0399.github.io)
